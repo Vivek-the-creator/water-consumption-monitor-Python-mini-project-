@@ -1,4 +1,4 @@
-```
+
 # 💧 **Water Consumption Monitor**
 
 A **Streamlit-powered dashboard** that visualizes household water consumption from smart meters. Designed to provide actionable insights for **homeowners**, **researchers**, and **urban planners** to promote smart water management.
