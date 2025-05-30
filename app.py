@@ -11,35 +11,47 @@ if uploaded_file:
     df["hour"] = df["time"].dt.hour
     df["date"] = df["time"].dt.date
 
-    # Sidebar date selection
+    # Sidebar date selection with "All Days" option
     unique_dates = sorted(df["date"].unique())
-    selected_date = st.sidebar.date_input("Select a date to view report", unique_dates[0], min_value=min(unique_dates), max_value=max(unique_dates))
+    date_options = ["All Days"] + [str(date) for date in unique_dates]
+    selected_option = st.sidebar.selectbox("Select a date (or view all)", date_options)
 
     # Toggle to show raw data
     if st.checkbox("Show Raw Data"):
         st.subheader("📄 Raw Data")
         st.dataframe(df)
 
-    # Filter data based on selected date
-    daily_df = df[df["date"] == selected_date]
+    # Filter data
+    if selected_option == "All Days":
+        filtered_df = df
+        title_suffix = " (All Days)"
+    else:
+        selected_date = pd.to_datetime(selected_option).date()
+        filtered_df = df[df["date"] == selected_date]
+        title_suffix = f" ({selected_date.strftime('%d-%m-%Y')})"
 
-    st.subheader(f"📊 Water Consumption Report for {selected_date.strftime('%d-%m-%Y')}")
+    st.subheader(f"📊 Water Consumption Report{title_suffix}")
 
-    # 1. Line Chart (Hourly Usage)
-    st.markdown("**1. Hourly Consumption (Line Chart)**")
-    hourly = daily_df.groupby("hour")["volume"].sum()
-    st.line_chart(hourly)
+    # 1. Line Chart (Hourly or Daily)
+    if selected_option == "All Days":
+        st.markdown("**1. Daily Total Consumption (Line Chart)**")
+        daily = filtered_df.groupby("date")["volume"].sum()
+        st.line_chart(daily)
+    else:
+        st.markdown("**1. Hourly Consumption (Line Chart)**")
+        hourly = filtered_df.groupby("hour")["volume"].sum()
+        st.line_chart(hourly)
 
     # 2. Heatmap (Hourly Usage by Location)
     st.markdown("**2. Hourly Usage by Neighborhood (Heatmap)**")
-    pivot = daily_df.pivot_table(values="volume", index="hour", columns="location", aggfunc="sum")
+    pivot = filtered_df.pivot_table(values="volume", index="hour", columns="location", aggfunc="sum")
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.heatmap(pivot.fillna(0), cmap="Blues", annot=True, fmt=".1f", ax=ax)
     st.pyplot(fig)
 
     # 3. Bar Chart (Household Usage)
     st.markdown("**3. Household Consumption (Bar Chart)**")
-    household = daily_df.groupby("household_id")["volume"].sum().sort_values(ascending=False)
+    household = filtered_df.groupby("household_id")["volume"].sum().sort_values(ascending=False)
     st.bar_chart(household)
 
 else:
