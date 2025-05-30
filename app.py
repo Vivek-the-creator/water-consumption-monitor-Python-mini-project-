@@ -11,6 +11,11 @@ if uploaded_file:
     df["hour"] = df["time"].dt.hour
     df["date"] = df["time"].dt.date
 
+    # Toggle to show raw data
+    if st.checkbox("Show Raw Data"):
+        st.subheader("📄 Raw Data")
+        st.dataframe(df)
+
     st.subheader("1. 📈 Daily Consumption (Line Chart)")
     daily = df.groupby("date")["volume"].sum()
     st.line_chart(daily)
